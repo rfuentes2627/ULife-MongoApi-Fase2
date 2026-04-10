@@ -1,0 +1,6 @@
+@ULIFE.MongoApi_HostAddress = http://localhost:5104
+
+GET {{ULIFE.MongoApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
