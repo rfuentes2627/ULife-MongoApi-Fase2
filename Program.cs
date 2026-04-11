@@ -1,3 +1,4 @@
+using MongoDB.Driver;
 using ULife.MongoApi.Data;
 using ULife.MongoApi.Services;
 using ULife.MongoApi.Settings;
@@ -32,8 +33,24 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var indexInitializer = scope.ServiceProvider.GetRequiredService<MongoIndexesInitializer>();
-    await indexInitializer.CreateIndexesAsync();
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("MongoStartup");
+
+    try
+    {
+        var indexInitializer = scope.ServiceProvider.GetRequiredService<MongoIndexesInitializer>();
+        await indexInitializer.CreateIndexesAsync();
+        logger.LogInformation("MongoDB indexes were created or already exist.");
+    }
+    catch (TimeoutException ex)
+    {
+        logger.LogWarning(ex, "MongoDB is not reachable at startup. API will continue running, but database endpoints may fail until MongoDB is available.");
+    }
+    catch (MongoException ex)
+    {
+        logger.LogWarning(ex, "MongoDB initialization failed at startup. API will continue running, but database endpoints may fail until MongoDB is available.");
+    }
 }
 
 app.Run();
